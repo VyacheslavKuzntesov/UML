@@ -154,7 +154,7 @@ class Car
 	bool driver_inside;
 	int speed;
 	const int MAX_SPEED;
-	unsigned int accelleration;
+	int accelleration;
 
 	struct Control
 	{
@@ -164,14 +164,15 @@ class Car
 	}control;
 
 public:
-	Car(double consumption, unsigned int volume, int max_speed) :
+	Car(double consumption, unsigned int volume, int max_speed, int accelleration = 10) :
 		engine(consumption),
 		tank(volume),
 		MAX_SPEED(max_speed >= 80 && max_speed <= 400 ? max_speed : 180),
-		accelleration(10)
+		accelleration(20)
 	{
 		driver_inside = false;
 		speed = 0;
+		this->accelleration = accelleration;
 		cout << "Your car is ready: " << this << endl;
 	}
 	~Car()
@@ -208,6 +209,7 @@ public:
 		engine.stop();
 		if (control.engine_idle_thread.joinable())control.engine_idle_thread.join();
 	}
+#ifdef HOMEWORK
 	void free_wheeling()
 	{
 		while (speed > 0)
@@ -241,6 +243,8 @@ public:
 		}
 		std::this_thread::sleep_for(1s);
 	}
+#endif // HOMEWORK
+
 
 	void control_car()
 	{
@@ -256,27 +260,48 @@ public:
 				cout << "Введите объем топлива: "; cin >> fuel;
 				fill(fuel);
 				break;
-			case 'I':case'i':
+			case 'I':case 'i':
 				if (engine.started())stop_engine();
 				else start_engine();
 				break;
+
+#ifdef HOMEWORK
 			case 'W':case 'w':case ArrowUp:
 				accelerate();
 				break;
 			case 'S':case 's':case ArrowDown:case Space:
 				slow_down();
 				break;
+#endif // HOMEWORK
+
 			case Enter:
 				if (driver_inside)get_out();
 				else get_in();
 				break;
+			case 'W':case 'w':
+				if (driver_inside && engine.started())
+				{
+					if (speed < MAX_SPEED)speed += accelleration;
+					if (speed > MAX_SPEED)speed = MAX_SPEED;
+					if (!control.free_wheeling_thread.joinable())
+						control.free_wheeling_thread = std::thread(&Car::free_wheeling, this);
+					std::this_thread::sleep_for(1s);
+				}
+				break;
+			case 'S':case 's':
+				if (speed > 0)speed -= accelleration;
+				if (speed < 0)speed = 0;
+				std::this_thread::sleep_for(1s);
+				break;
 			case Escape:
+				speed = 0;
 				stop_engine();
 				get_out();
 			default:
 				break;
 			}
 			if (tank.get_fuel_level() == 0)stop_engine();
+			if (speed == 0 && control.free_wheeling_thread.joinable())control.free_wheeling_thread.join();
 		} while (key != Escape);
 	}
 
@@ -290,11 +315,33 @@ public:
 		engine.stop();
 	}
 
+	void free_wheeling()
+	{
+		while (speed > 0)
+		{
+			speed--;
+			std::this_thread::sleep_for(1s);
+		}
+	}
+
+
+
 	void panel()const
 	{
 		while (driver_inside)
 		{
 			system("CLS");
+			HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+			int i = 0;
+			for (; i < speed * .4; i++)
+			{
+				if (i > 50)SetConsoleTextAttribute(hConsole, 0x0E);
+				if (i > 80)SetConsoleTextAttribute(hConsole, 0x0C);
+				cout << "|";
+			}
+			SetConsoleTextAttribute(hConsole, 0x07);
+			cout << i;
+			cout << endl;
 			cout << "Fuel level " << std::setprecision(4) << fixed << tank.get_fuel_level() << " liters.\t";
 			if (tank.get_fuel_level() < 5)
 			{
@@ -305,11 +352,17 @@ public:
 			}
 			cout << endl;
 			cout << "Engine is " << (engine.started() ? "started" : "stoped") << endl;
-			cout << "Max speed:\t" << MAX_SPEED << " km/h" << endl;;
-			cout << "Current speed: " << speed << " km/h" << endl;;
+			cout << "Speed: " << speed << " km/h\n";
+
+
+#ifdef HOMEWORK
+			cout << "Max speed:\t" << MAX_SPEED << " km/h" << endl;
+			cout << "Current speed: " << speed << " km/h" << endl;
+#endif // HOMEWORK
+
 			std::this_thread::sleep_for(500ms);
+			}
 		}
-	}
 
 	void info()const
 	{
@@ -442,7 +495,7 @@ public:
 		cout << "Escape - выйти из программы" << endl;
 	}
 
-};
+	};
 #endif // HOMEWORK
 
 
