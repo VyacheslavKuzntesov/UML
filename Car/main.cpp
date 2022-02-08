@@ -208,15 +208,6 @@ public:
 		engine.stop();
 		if (control.engine_idle_thread.joinable())control.engine_idle_thread.join();
 	}
-	void adjust_consumption()
-	{
-		if (speed > 0 && speed <= 60)engine.set_consumption_per_second(.002);
-		else if (speed > 60 && speed <= 100)engine.set_consumption_per_second(.0014);
-		else if (speed > 100 && speed <= 140)engine.set_consumption_per_second(.002);
-		else if (speed > 140 && speed <= 200)engine.set_consumption_per_second(.0025);
-		else if (speed > 200)engine.set_consumption_per_second(.003);
-		else if (speed == 0)engine.set_consumption_per_second(engine.get_consumption() * 5e-5);
-	}
 	void free_wheeling()
 	{
 		while (speed > 0)
@@ -233,7 +224,6 @@ public:
 			speed += accelleration;
 			if (control.free_wheeling_thread.get_id() == std::thread::id())
 				control.free_wheeling_thread = std::thread(&Car::free_wheeling, this);
-			adjust_consumption();
 		}
 		std::this_thread::sleep_for(1s);
 	}
@@ -248,7 +238,6 @@ public:
 				if (control.free_wheeling_thread.joinable())
 					control.free_wheeling_thread.join();
 			}
-			adjust_consumption();
 		}
 		std::this_thread::sleep_for(1s);
 	}
