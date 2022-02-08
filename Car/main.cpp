@@ -260,7 +260,7 @@ public:
 				if (engine.started())stop_engine();
 				else start_engine();
 				break;
-			case 'W':case 'w':case ArrowUp://Gas - газ, разгон
+			case 'W':case 'w':case ArrowUp:
 				accelerate();
 				break;
 			case 'S':case 's':case ArrowDown:case Space:
