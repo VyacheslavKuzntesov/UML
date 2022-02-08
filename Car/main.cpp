@@ -74,6 +74,7 @@ class Engine
 	double consumption;				//Расход топлива на 100 км
 	double consumption_per_second;	//Расход за 1 секунду
 	bool is_started;
+	int default_consumption;
 public:
 	double get_consumption()const
 	{
@@ -116,12 +117,23 @@ public:
 	Engine(double consumption)
 	{
 		set_consumption(consumption);
+		this->default_consumption = this->consumption;
 		is_started = false;
 		cout << "Engine is ready" << endl;
 	}
 	~Engine()
 	{
 		cout << "Engine is over" << endl;
+	}
+
+	void change_consumption(int speed)
+	{
+		set_consumption(default_consumption);
+		if (speed > 0 && speed <= 60)consumption_per_second*=6;
+		else if (speed > 60 && speed <= 100)consumption_per_second*=5;
+		else if (speed > 100 && speed <= 140)consumption_per_second*=6;
+		else if (speed > 140 && speed <= 200)consumption_per_second*=8;
+		else if (speed > 200 && speed <= 250)consumption_per_second*=10;
 	}
 
 	void info()const
@@ -320,8 +332,10 @@ public:
 		while (speed > 0)
 		{
 			speed--;
+			engine.change_consumption(speed);
 			std::this_thread::sleep_for(1s);
 		}
+		engine.change_consumption(speed);
 	}
 
 
@@ -353,6 +367,7 @@ public:
 			cout << endl;
 			cout << "Engine is " << (engine.started() ? "started" : "stoped") << endl;
 			cout << "Speed: " << speed << " km/h\n";
+			cout << "Consumption: " << engine.get_consumption_per_second() << " liter/s\n";
 
 
 #ifdef HOMEWORK
